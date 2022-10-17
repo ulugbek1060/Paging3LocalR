@@ -13,22 +13,22 @@
     android:layout_marginStart="16dp"
     android:layout_marginTop="6dp"
     android:contentDescription="@string/user_photo"
-    app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
     tools:src="@drawable/ic_user_avatar" />
 
   <TextView
     android:id="@+id/userNameTextView"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
-    android:layout_marginStart="16dp"
     android:ellipsize="end"
-    android:lines="1"
     android:textColor="@color/black"
+    android:layout_marginStart="16dp"
+    android:lines="1"
     android:textSize="16sp"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toEndOf="@id/photoImageView"
+    app:layout_constraintEnd_toStartOf="@id/starImageView"
     app:layout_constraintTop_toTopOf="@id/photoImageView"
+    app:layout_constraintStart_toEndOf="@id/photoImageView"
     tools:text="John Smith" />
 
   <TextView
@@ -37,11 +37,11 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="4dp"
     android:ellipsize="end"
-    android:lines="1"
     android:textSize="14sp"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="@id/userNameTextView"
+    android:lines="1"
+    app:layout_constraintEnd_toStartOf="@id/starImageView"
     app:layout_constraintTop_toBottomOf="@id/userNameTextView"
+    app:layout_constraintStart_toStartOf="@id/userNameTextView"
     tools:text="Google Inc." />
 
   <androidx.constraintlayout.widget.Barrier
@@ -55,5 +55,42 @@
     android:layout_width="wrap_content"
     android:layout_height="6dp"
     app:layout_constraintTop_toBottomOf="@id/barrier" />
+
+  <ImageView
+    android:id="@+id/deleteImageView"
+    android:layout_width="36dp"
+    android:layout_height="36dp"
+    android:layout_marginEnd="8dp"
+    android:background="?android:attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/delete_button"
+    android:padding="4dp"
+    android:src="@drawable/ic_delete"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:tint="@color/inactive" />
+
+  <ImageView
+    android:id="@+id/starImageView"
+    android:layout_width="36dp"
+    android:layout_height="36dp"
+    android:layout_marginEnd="6dp"
+    android:background="?android:attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/star_button"
+    android:padding="4dp"
+    android:src="@drawable/ic_outline_star"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toStartOf="@id/deleteImageView"
+    app:layout_constraintTop_toTopOf="parent"
+    app:tint="@color/inactive" />
+
+  <ProgressBar
+    android:id="@+id/userProgressBar"
+    android:layout_width="36dp"
+    android:layout_height="36dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="@id/deleteImageView"
+    app:layout_constraintStart_toStartOf="@id/starImageView"
+    app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

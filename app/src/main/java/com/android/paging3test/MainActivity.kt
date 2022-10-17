@@ -1,6 +1,7 @@
 package com.android.paging3test
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isInvisible
 import androidx.core.widget.addTextChangedListener
@@ -13,14 +14,20 @@ import com.android.paging3test.model.Repositories
 import com.android.paging3test.model.adapters.DefaultLoadStateAdapter
 import com.android.paging3test.model.adapters.TryAgainAction
 import com.android.paging3test.model.adapters.UsersAdapter
+import com.android.paging3test.model.observeEvent
 import com.android.paging3test.model.simpleScan
 import com.android.paging3test.model.viewModelCreator
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import ua.cn.stu.paging.views.MainViewModel
 
+@ExperimentalCoroutinesApi
+@FlowPreview
 class MainActivity : AppCompatActivity() {
 
    private lateinit var binding: ActivityMainBinding
@@ -29,7 +36,7 @@ class MainActivity : AppCompatActivity() {
    private val viewModel by viewModelCreator { MainViewModel(Repositories.usersRepository) }
 
    override fun onCreate(savedInstanceState: Bundle?) {
-      Repositories.init(this)
+      Repositories.init(applicationContext)
       super.onCreate(savedInstanceState)
 
       binding = ActivityMainBinding.inflate(layoutInflater)
@@ -39,18 +46,21 @@ class MainActivity : AppCompatActivity() {
       setupSearchInput()
       setupSwipeToRefresh()
       setupEnableErrorsCheckBox()
+
+      observeErrorMessages()
    }
 
    private fun setupUsersList() {
-      val adapter = UsersAdapter()
+      val adapter = UsersAdapter(viewModel)
 
       // in case of loading errors this callback is called when you tap the 'Try Again' button
       val tryAgainAction: TryAgainAction = { adapter.retry() }
 
       val footerAdapter = DefaultLoadStateAdapter(tryAgainAction)
+      val headerAdapter = DefaultLoadStateAdapter(tryAgainAction)
 
       // combined adapter which shows both the list of users + footer indicator when loading pages
-      val adapterWithLoadState = adapter.withLoadStateFooter(footerAdapter)
+      val adapterWithLoadState = adapter.withLoadStateHeaderAndFooter(headerAdapter, footerAdapter)
 
       binding.usersRecyclerView.layoutManager = LinearLayoutManager(this)
       binding.usersRecyclerView.adapter = adapterWithLoadState
@@ -65,6 +75,7 @@ class MainActivity : AppCompatActivity() {
 
       observeUsers(adapter)
       observeLoadState(adapter)
+      observeInvalidationEvents(adapter)
 
       handleScrollingToTopWhenSearching(adapter)
       handleListVisibility(adapter)
@@ -106,7 +117,9 @@ class MainActivity : AppCompatActivity() {
       getRefreshLoadStateFlow(adapter)
          .simpleScan(count = 2)
          .collectLatest { (previousState, currentState) ->
-            if (previousState is LoadState.Loading && currentState is LoadState.NotLoading) {
+            if (previousState is LoadState.Loading && currentState is LoadState.NotLoading
+               && viewModel.scrollEvents.value?.get() != null
+            ) {
                binding.usersRecyclerView.scrollToPosition(0)
             }
          }
@@ -128,7 +141,20 @@ class MainActivity : AppCompatActivity() {
    }
 
    private fun getRefreshLoadStateFlow(adapter: UsersAdapter): Flow<LoadState> {
-      return adapter.loadStateFlow.map { it.refresh }
+      return adapter.loadStateFlow
+         .map { it.refresh }
+   }
+
+   private fun observeErrorMessages() {
+      viewModel.errorEvents.observeEvent(this) { messageRes ->
+         Toast.makeText(this, messageRes, Toast.LENGTH_SHORT).show()
+      }
+   }
+
+   private fun observeInvalidationEvents(adapter: UsersAdapter) {
+      viewModel.invalidateEvents.observeEvent(this) {
+         adapter.refresh()
+      }
    }
 
    // ----

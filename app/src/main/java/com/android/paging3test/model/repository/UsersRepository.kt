@@ -10,7 +10,7 @@ interface UsersRepository {
     * Whether errors are enabled or not. The value is listened by the bottom "Enable Errors" checkbox
     * in the MainActivity.
     */
-   fun isErrorsEnable(): Flow<Boolean>
+   fun isErrorsEnabled(): Flow<Boolean>
 
    /**
     * Enable/Disable errors when fetching users.
@@ -21,4 +21,16 @@ interface UsersRepository {
     * Get the paging list of users.
     */
    fun getPagedUsers(searchBy: String): Flow<PagingData<User>>
+
+   /**
+    * Set the 'star' flag for the specific user.
+    * @throws IllegalStateException if the 'Enable errors' checkbox is checked.
+    */
+   suspend fun setIsFavorite(user: User, isFavorite: Boolean)
+
+   /**
+    * Delete the user from the app.
+    * @throws IllegalStateException if the 'Enable errors' checkbox is checked.
+    */
+   suspend fun delete(user: User)
 }

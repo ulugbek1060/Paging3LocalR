@@ -13,8 +13,7 @@ typealias UsersPageLoader = suspend (pageIndex: Int, pageSize: Int) -> List<User
  */
 @Suppress("UnnecessaryVariable")
 class UsersPagingSource(
-   private val loader: UsersPageLoader,
-   private val pageSize: Int
+   private val loader: UsersPageLoader
 ) : PagingSource<Int, User>() {
 
    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, User> {
@@ -49,5 +48,4 @@ class UsersPagingSource(
       // page doesn't have 'currentKey' property, so need to calculate it manually:
       return page.prevKey?.plus(1) ?: page.nextKey?.minus(1)
    }
-
 }

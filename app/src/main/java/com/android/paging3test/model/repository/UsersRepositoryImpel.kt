@@ -3,7 +3,9 @@ package com.android.paging3test.model.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.android.paging3test.model.*
+import com.android.paging3test.model.User
+import com.android.paging3test.model.database.IdTuple
+import com.android.paging3test.model.database.UpdateUserFavoriteTuple
 import com.android.paging3test.model.database.UserDao
 import com.android.paging3test.model.database.UserEntity
 import kotlinx.coroutines.CoroutineDispatcher
@@ -19,7 +21,7 @@ class UsersRepositoryImpel(
 
    private val enableErrorsFlow = MutableStateFlow(false)
 
-   override fun isErrorsEnable(): Flow<Boolean> = enableErrorsFlow
+   override fun isErrorsEnabled(): Flow<Boolean> = enableErrorsFlow
 
    override fun setErrorsEnabled(value: Boolean) {
       enableErrorsFlow.value = value
@@ -31,20 +33,37 @@ class UsersRepositoryImpel(
       }
       return Pager(
          config = PagingConfig(
+            // for now let's use the same page size for initial
+            // and subsequent loads
             pageSize = PAGE_SIZE,
+            initialLoadSize = PAGE_SIZE,
+            prefetchDistance = PAGE_SIZE / 2,
             enablePlaceholders = false
          ),
-         pagingSourceFactory = { UsersPagingSource(loader, PAGE_SIZE) }
+         pagingSourceFactory = { UsersPagingSource(loader) }
       ).flow
+   }
+
+   override suspend fun setIsFavorite(user: User, isFavorite: Boolean) = withContext(ioDispatcher) {
+      delay(1000)
+      throwErrorsIfEnabled()
+
+      val tuple = UpdateUserFavoriteTuple(user.id, isFavorite)
+      usersDao.setIsFavorite(tuple)
+   }
+
+   override suspend fun delete(user: User) = withContext(ioDispatcher) {
+      delay(1000)
+      throwErrorsIfEnabled()
+
+      usersDao.delete(IdTuple(user.id))
    }
 
    private suspend fun getUsers(pageIndex: Int, pageSize: Int, searchBy: String): List<User>
        = withContext(ioDispatcher) {
 
       delay(2000) // some delay to test loading state
-
-      // if "Enable Errors" checkbox is checked -> throw exception
-      if (enableErrorsFlow.value) throw IllegalStateException("Error!")
+      throwErrorsIfEnabled()
 
       // calculate offset value required by DAO
       val offset = pageIndex * pageSize
@@ -53,10 +72,15 @@ class UsersRepositoryImpel(
       val list = usersDao.getUsers(pageSize, offset, searchBy)
 
       // map UserDbEntity to User
-      return@withContext list.map(UserEntity::toUser)
+      return@withContext list
+         .map(UserEntity::toUser)
+   }
+
+   private fun throwErrorsIfEnabled() {
+      if (enableErrorsFlow.value) throw IllegalStateException("Error!")
    }
 
    private companion object {
-      const val PAGE_SIZE = 20
+      const val PAGE_SIZE = 40
    }
 }
